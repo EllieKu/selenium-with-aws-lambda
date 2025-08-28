@@ -1,0 +1,87 @@
+name: Build & Deploy to Amazon ECR
+
+on:
+  push:
+    branches: [ "test", "main" ]
+
+env:
+  AWS_REGION: ap-northeast-1
+  ECR_REPOSITORY: ellie/selenium-with-lambda
+  DOCKERFILE: ./Dockerfile
+  CONTEXT: .
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_and_maybe_push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set image tags
+        id: tags
+        run: |
+          SHORT_SHA=${GITHUB_SHA::7}
+          echo "sha_tag=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          # 只有 main 會再多推 latest
+          if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+            echo "latest_tag=latest" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS (only on main)
+        if: github.ref == 'refs/heads/main'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::390402569036:instance-profile/SeleniumChromeDriver
+
+      - name: Login to Amazon ECR (main)
+        if: github.ref == 'refs/heads/main'
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build (test)
+        if: github.ref == 'refs/heads/test'
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ env.CONTEXT }}
+          file: ${{ env.DOCKERFILE }}
+          platforms: linux/amd64
+          push: false
+          tags: local/${{ env.ECR_REPOSITORY }}:${{ steps.tags.outputs.sha_tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & Push (main)
+        if: github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ env.CONTEXT }}
+          file: ${{ env.DOCKERFILE }}
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ github.ref == 'refs/heads/main' && format('{0}/{1}:{2}', steps.login-ecr.outputs.registry, env.ECR_REPOSITORY, steps.tags.outputs.sha_tag) || format('local/{0}:{1}', env.ECR_REPOSITORY, steps.tags.outputs.sha_tag) }}
+            ${{ github.ref == 'refs/heads/main' && format('{0}/{1}:{2}', steps.login-ecr.outputs.registry, env.ECR_REPOSITORY, steps.tags.outputs.latest_tag) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Echo result
+        run: |
+          if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+            echo "✅ Built & Pushed to ECR: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.tags.outputs.sha_tag }}"
+            echo "Also tagged 'latest'."
+          else
+            echo "🧪 Built image for branch 'test' (no push)."
+          fi
