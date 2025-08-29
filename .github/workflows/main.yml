@@ -45,6 +45,7 @@ jobs:
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: arn:aws:iam::390402569036:role/SeleniumChromeDriver
+          audience: sts.amazonaws.com
 
       - name: Login to Amazon ECR (main)
         if: github.ref == 'refs/heads/main'
