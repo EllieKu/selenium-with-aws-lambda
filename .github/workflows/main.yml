@@ -39,13 +39,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Configure AWS (only on main)
+      - name: Configure AWS credentials (only on main)
         if: github.ref == 'refs/heads/main'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: arn:aws:iam::390402569036:role/SeleniumChromeDriver
-          audience: sts.amazonaws.com
 
       - name: Login to Amazon ECR (main)
         if: github.ref == 'refs/heads/main'
