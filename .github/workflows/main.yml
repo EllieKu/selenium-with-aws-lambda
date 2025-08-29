@@ -44,7 +44,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: arn:aws:iam::390402569036:instance-profile/SeleniumChromeDriver
+          role-to-assume: arn:aws:iam::390402569036:role/SeleniumChromeDriver
 
       - name: Login to Amazon ECR (main)
         if: github.ref == 'refs/heads/main'
