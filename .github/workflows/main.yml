@@ -6,7 +6,8 @@ on:
 
 env:
   AWS_REGION: ap-northeast-1
-  ECR_REPOSITORY: selenium-with-lambda
+  ECR_REPOSITORY: ellie/selenium-with-lambda
+  ECR_REGISTRY: public.ecr.aws/k4v0c2c8
   DOCKERFILE: ./Dockerfile
   CONTEXT: .
 
@@ -48,8 +49,10 @@ jobs:
 
       - name: Login to Amazon ECR (main)
         if: github.ref == 'refs/heads/main'
-        id: login-ecr
+        id: login-ecr-public
         uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
 
       - name: Build (test)
         if: github.ref == 'refs/heads/test'
@@ -63,7 +66,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build & Push (main)
+      - name: Build, tag, and push docker image to Amazon ECR Public (main)
         if: github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v6
         with:
@@ -72,8 +75,8 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            ${{ github.ref == 'refs/heads/main' && format('{0}/{1}:{2}', steps.login-ecr.outputs.registry, env.ECR_REPOSITORY, steps.tags.outputs.sha_tag) || format('local/{0}:{1}', env.ECR_REPOSITORY, steps.tags.outputs.sha_tag) }}
-            ${{ github.ref == 'refs/heads/main' && format('{0}/{1}:{2}', steps.login-ecr.outputs.registry, env.ECR_REPOSITORY, steps.tags.outputs.latest_tag) || '' }}
+            ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ steps.tags.outputs.sha_tag }}
+            ${{ steps.tags.outputs.latest_tag && format('{0}/{1}:{2}', env.ECR_REGISTRY, env.ECR_REPOSITORY, steps.tags.outputs.latest_tag) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
