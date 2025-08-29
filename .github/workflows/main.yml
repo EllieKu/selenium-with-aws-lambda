@@ -47,10 +47,12 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: arn:aws:iam::390402569036:role/SeleniumChromeDriver
 
-      - name: Login to Amazon ECR (main)
+      - name: Login to Amazon ECR Public (main)
         if: github.ref == 'refs/heads/main'
         id: login-ecr-public
         uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
 
       - name: Build (test)
         if: github.ref == 'refs/heads/test'
@@ -81,7 +83,7 @@ jobs:
       - name: Echo result
         run: |
           if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
-            echo "✅ Built & Pushed to ECR: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.tags.outputs.sha_tag }}"
+            echo "✅ Built & Pushed to ECR Public: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ steps.tags.outputs.sha_tag }}"
             echo "Also tagged 'latest'."
           else
             echo "🧪 Built image for branch 'test' (no push)."
