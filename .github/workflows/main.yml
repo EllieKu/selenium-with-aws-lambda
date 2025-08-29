@@ -6,7 +6,7 @@ on:
 
 env:
   AWS_REGION: ap-northeast-1
-  ECR_REPOSITORY: ellie/selenium-with-lambda
+  ECR_REPOSITORY: selenium-with-lambda
   DOCKERFILE: ./Dockerfile
   CONTEXT: .
 
