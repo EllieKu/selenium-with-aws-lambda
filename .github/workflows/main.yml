@@ -10,6 +10,7 @@ env:
   ECR_REGISTRY: public.ecr.aws/k4v0c2c8
   DOCKERFILE: ./Dockerfile
   CONTEXT: .
+  LAMBDA_FUNCTION_NAME: selenium-lambda
 
 permissions:
   id-token: write
@@ -79,6 +80,14 @@ jobs:
             ${{ steps.tags.outputs.latest_tag && format('{0}/{1}:{2}', env.ECR_REGISTRY, env.ECR_REPOSITORY, steps.tags.outputs.latest_tag) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Update Lambda function (main)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
+            --image-uri ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ steps.tags.outputs.sha_tag }} \
+            --region ${{ env.AWS_REGION }}
 
       - name: Echo result
         run: |
