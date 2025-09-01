@@ -65,7 +65,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build, tag, and push docker image to Amazon ECR Public (main)
+      - name: Build, tag, and push docker image to Amazon ECR Private (main)
         if: github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v6
         with:
@@ -73,6 +73,8 @@ jobs:
           file: ${{ env.DOCKERFILE }}
           platforms: linux/amd64
           push: true
+          provenance: false
+          sbom: false
           tags: |
             ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ steps.tags.outputs.sha_tag }}
             ${{ steps.tags.outputs.latest_tag && format('{0}/{1}:{2}', env.ECR_REGISTRY, env.ECR_REPOSITORY, steps.tags.outputs.latest_tag) || '' }}
