@@ -45,15 +45,13 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: us-east-1
+          aws-region: ${{ env.AWS_REGION }}
           role-to-assume: arn:aws:iam::390402569036:role/SeleniumChromeDriver
 
-      - name: Login to Amazon ECR Public (main)
+      - name: Login to Amazon ECR Private (main)
         if: github.ref == 'refs/heads/main'
-        id: login-ecr-public
+        id: login-ecr-private
         uses: aws-actions/amazon-ecr-login@v2
-        with:
-          registry-type: public
 
       - name: Build (test)
         if: github.ref == 'refs/heads/test'
