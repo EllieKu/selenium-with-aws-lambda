@@ -7,7 +7,7 @@ on:
 env:
   AWS_REGION: ap-northeast-1
   ECR_REPOSITORY: ellie/selenium-with-lambda
-  ECR_REGISTRY: public.ecr.aws/k4v0c2c8
+  ECR_REGISTRY: 390402569036.dkr.ecr.ap-northeast-1.amazonaws.com
   DOCKERFILE: ./Dockerfile
   CONTEXT: .
   LAMBDA_FUNCTION_NAME: selenium-lambda
